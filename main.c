@@ -82,16 +82,13 @@ int main(){
   };
 
   generate_image(img, img_w, img_h, scenario);
-  write_to_file(img, img_w, img_h);
+  // write_to_file(img, img_w, img_h);
 
   for(int i = 0; i < img_h; i++){
-    img[i] = (int **) malloc(img_w * sizeof(int *));
     for(int j = 0; j < img_w; j++){
       free(img[i][j]);
     }
-
     free(img[i]);
   }
-
   free(img);
 }

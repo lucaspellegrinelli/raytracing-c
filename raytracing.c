@@ -165,10 +165,10 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
         
         if(!traced) break;
         
-        double rayD_dot_N = vec_dot(ray_dir, obj_normal);
+        double dir_dot_normal = vec_dot(ray_dir, obj_normal);
         for(int i = 0; i < 3; i++){
           ray_origin[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
-          ray_dir[i] = ray_dir[i] - 2 * rayD_dot_N * obj_normal[i];
+          ray_dir[i] = ray_dir[i] - 2 * dir_dot_normal * obj_normal[i];
           px_color[i] += reflection * ray_color[i];
         }
 
