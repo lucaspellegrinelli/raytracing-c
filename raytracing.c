@@ -28,7 +28,6 @@ double intersect_plane(double camera_pos[3], double camera_dir[3], double plane_
 }
 
 double intersect_sphere(double camera_pos[3], double camera_dir[3], double sphere_pos[3], double radius){
-  double a = vec_dot(camera_dir, camera_dir);
   double pos_diff[3];
   for(int i = 0; i < 3; i++){
     pos_diff[i] = camera_pos[i] - sphere_pos[i];
@@ -36,18 +35,16 @@ double intersect_sphere(double camera_pos[3], double camera_dir[3], double spher
 
   double b = 2 * vec_dot(camera_dir, pos_diff);
   double c = vec_dot(pos_diff, pos_diff) - radius * radius;
-  double delta = b * b - 4 * a * c;
+
+  double delta = b * b - 4 * c;
 
   if(delta > 0){
     double sqrt_delta = sqrt(delta);
-    double q = b < 0 ? (-b - sqrt_delta) / 2.0 : (-b + sqrt_delta) / 2.0;
-    double t0 = q / a;
-    double t1 = c / q;
-    double tmin = min(t0, t1);
-    double tmax = max(t0, t1);
+    double x0 = (-b + sqrt_delta) / 2;
+    double x1 = (-b - sqrt_delta) / 2;
 
-    if(tmax >= 0){
-      return tmin < 0 ? tmax : tmin;
+    if(x0 > 0 && x1 > 0){
+      return min(x0, x1);
     }
   }
 
@@ -60,6 +57,8 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
 
   double x_step = (screen_bounds[2] - screen_bounds[0]) / screen_w;
   double y_step = (screen_bounds[3] - screen_bounds[1]) / screen_h;
+
+  int n_spheres = sizeof(scenario.spheres) / sizeof(sphere_t);
 
   for(int px = 0; px < screen_w; px++){
     for(int py = 0; py < screen_h; py++){
@@ -87,7 +86,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
         int closest_sphere_i = 0;
         double t_sphere = INF;
 
-        for(int i = 0; i < 3; i++){
+        for(int i = 0; i < n_spheres; i++){
           double t = intersect_sphere(ray_origin, ray_dir, scenario.spheres[i].pos, scenario.spheres[i].radius);
           if(t < t_sphere){
             t_sphere = t;
@@ -149,7 +148,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
             for(int i = 0; i < 3; i++){
               H[i] = dir_to_light[i] + dir_to_camera[i];
             }
-            
+
             vec_normalize(H);
 
             double diffuse_intensity = max(vec_dot(obj_normal, dir_to_light), 0);
