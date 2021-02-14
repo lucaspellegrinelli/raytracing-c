@@ -70,22 +70,16 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
       scenario.camera_dir[0] = x;
       scenario.camera_dir[1] = y;
 
-      double D[3];
+      double ray_origin[3], ray_dir[3];
       for(int i = 0; i < 3; i++){
-        D[i] = scenario.camera_dir[i] - scenario.camera_pos[i];
+        ray_dir[i] = scenario.camera_dir[i] - scenario.camera_pos[i];
+        ray_origin[i] = scenario.camera_pos[i];
       }
 
-      vec_normalize(D);
-
-      double rayO[3], rayD[3];
-      for(int i = 0; i < 3; i++){
-        rayO[i] = scenario.camera_pos[i];
-        rayD[i] = D[i];
-      }
+      vec_normalize(ray_dir);
 
       double reflection = 1.0;
-      int curr_depth = 0;
-      while(curr_depth < MAX_DEPTH){
+      for(int depth = 0; depth < MAX_DEPTH; depth++){
         int traced = 0;
 
         // Trace ray
@@ -93,7 +87,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
         double t_sphere = INF;
 
         for(int i = 0; i < 3; i++){
-          double t = intersect_sphere(rayO, rayD, scenario.spheres[i].pos, scenario.spheres[i].radius);
+          double t = intersect_sphere(ray_origin, ray_dir, scenario.spheres[i].pos, scenario.spheres[i].radius);
           if(t < t_sphere){
             t_sphere = t;
             closest_sphere_i = i;
@@ -101,7 +95,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
         }
         
         sphere_t close_sphere = scenario.spheres[closest_sphere_i];
-        double t_plane = intersect_plane(rayO, rayD, scenario.plane.pos, scenario.plane.normal);
+        double t_plane = intersect_plane(ray_origin, ray_dir, scenario.plane.pos, scenario.plane.normal);
 
         double tmin = min(t_sphere, t_plane);
         int tObj = t_sphere < t_plane ? SPHERE : PLANE;
@@ -109,7 +103,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
         double intersec_pt[3], obj_normal[3], ray_color[3];
         if(tmin < INF){
           for(int i = 0; i < 3; i++){
-            intersec_pt[i] = rayO[i] + rayD[i] * tmin;
+            intersec_pt[i] = ray_origin[i] + ray_dir[i] * tmin;
           }
 
           double color[3];
@@ -128,62 +122,60 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
             vec_normalize(obj_normal);
           }
 
-          double dirToLight[3], dirToCamera[3];
+          double intercept_to_light[3], intercept_to_camera[3];
           for(int i = 0; i < 3; i++){
-            dirToLight[i] = scenario.light_pos[i] - intersec_pt[i];
-            dirToCamera[i] = scenario.light_pos[i] - intersec_pt[i];
+            intercept_to_light[i] = scenario.light_pos[i] - intersec_pt[i];
+            intercept_to_camera[i] = scenario.light_pos[i] - intersec_pt[i];
           }
 
-          vec_normalize(dirToLight);
-          vec_normalize(dirToCamera);
+          vec_normalize(intercept_to_light);
+          vec_normalize(intercept_to_camera);
 
           int is_shadow;
-          double fromCast[3];
+          double bounce_dir[3];
           for(int i = 0; i < 3; i++){
-            fromCast[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
+            bounce_dir[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
           }
 
           if(tObj == PLANE){
-            is_shadow = intersect_sphere(fromCast, dirToLight, close_sphere.pos, close_sphere.radius) < INF;
+            is_shadow = intersect_sphere(bounce_dir, intercept_to_light, close_sphere.pos, close_sphere.radius) < INF;
           }else{
-            is_shadow = intersect_plane(fromCast, dirToLight, scenario.plane.pos, scenario.plane.normal) < INF;
+            is_shadow = intersect_plane(bounce_dir, intercept_to_light, scenario.plane.pos, scenario.plane.normal) < INF;
           }
 
           if(!is_shadow){
-            double obj_diffuse = tObj == PLANE ? scenario.plane.diffuse : scenario.diffuse_c;
-            double obj_specular = tObj == PLANE ? scenario.plane.specular : scenario.specular_c;
+            double obj_diffuse = tObj == PLANE ? scenario.plane.diffuse : close_sphere.diffuse;
+            double obj_specular = tObj == PLANE ? scenario.plane.specular : close_sphere.specular;
 
-            double bothDirs[3];
+            double H[3];
             for(int i = 0; i < 3; i++){
-              bothDirs[i] = dirToLight[i] + dirToCamera[i];
+              H[i] = intercept_to_light[i] + intercept_to_camera[i];
             }
-            vec_normalize(bothDirs);
+            vec_normalize(H);
 
-            double normal_vec_dot_dirLight = max(vec_dot(obj_normal, dirToLight), 0);
-            double normal_vec_dot_bothDirs = pow(max(vec_dot(obj_normal, bothDirs), 0), scenario.specular_k);
+            double diffuse_intensity = max(vec_dot(obj_normal, intercept_to_light), 0);
+            double specular_intensity = pow(max(vec_dot(obj_normal, H), 0), scenario.specular_exp);
             for(int i = 0; i < 3; i++){
               ray_color[i] = scenario.ambient_light;
-              ray_color[i] += obj_diffuse * normal_vec_dot_dirLight * color[i];
-              ray_color[i] += obj_specular * normal_vec_dot_bothDirs * scenario.light_color[i];
+              ray_color[i] += obj_diffuse * diffuse_intensity * color[i];
+              ray_color[i] += obj_specular * specular_intensity * scenario.light_color[i];
             }
 
             traced = 1;
           }
         }
-        // End Trace ray
         
         if(!traced) break;
         
-        double rayD_vec_dot_N = vec_dot(rayD, obj_normal);
+        double rayD_dot_N = vec_dot(ray_dir, obj_normal);
         for(int i = 0; i < 3; i++){
-          rayO[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
-          rayD[i] = rayD[i] - 2 * rayD_vec_dot_N * obj_normal[i];
+          ray_origin[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
+          ray_dir[i] = ray_dir[i] - 2 * rayD_dot_N * obj_normal[i];
           px_color[i] += reflection * ray_color[i];
         }
 
-        vec_normalize(rayD);
+        vec_normalize(ray_dir);
         reflection *= tObj == PLANE ? scenario.plane.reflection : close_sphere.reflection;
-        curr_depth++;
       }
 
       for(int i = 0; i < 3; i++){

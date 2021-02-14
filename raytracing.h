@@ -20,14 +20,14 @@ typedef struct {
   double pos[3];
   double color[3];
   double radius;
+  double diffuse;
+  double specular;
   double reflection;
 } sphere_t;
 
 typedef struct {
   double ambient_light;
-  double diffuse_c;
-  double specular_c;
-  double specular_k;
+  double specular_exp;
 
   double camera_pos[3];
   double camera_dir[3];

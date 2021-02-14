@@ -47,27 +47,31 @@ int main(){
     {-0.5, 0.6, -2.0}, // Position
     {0.20, 0.59, 0.86}, // Color (RGB)
     0.6, // Radius
-    0.10 // Reflection
+    1.0, // Diffuse
+    0.5, // Specular
+    0.15 // Reflection
   };
 
   sphere_t sphere_1 = {
     {0.2, 0.2, -2.0}, // Position
     {0.9, 0.30, 0.23}, // Color (RGB)
     0.2, // Radius
-    0.10 // Reflection
+    1.0, // Diffuse
+    0.5, // Specular
+    0.15 // Reflection
   };
 
   sphere_t sphere_2 = {
     {-0.65, 0.3, -1.0}, // Position
     {0.18, 0.80, 0.44}, // Color (RGB)
     0.3, // Radius
-    0.10 // Reflection
+    1.0, // Diffuse
+    0.5, // Specular
+    0.15 // Reflection
   };
 
   scenario_t scenario = {
     0.05, // Ambient Light
-    1.0, // General object diffuse
-    0.5, // General object specular
     100, // Specular light power
     {0.75, 0.3, 1.0}, // Camera Position
     {0.0, 0.0, 0.0}, // Camera Direction
