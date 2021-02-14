@@ -6,4 +6,9 @@ This is a raytracing implementation that features simple shadows, reflections an
 
 ![](https://i.imgur.com/uTCBW1r.png)
 
-Note: When running the code, the output image will be in PPM format since it is easy to manage in C. To open this kind of image I recommend [GIMP](https://www.gimp.org/) and then you can export in whatever format you like.
+## How to run
+
+Compile with ```make``` and run the program with ```./main```.
+
+## Output
+When running the code, the output image will be in PPM format since it is easy to manage in C. To open this kind of image I recommend [GIMP](https://www.gimp.org/) and then you can export in whatever format you like.
