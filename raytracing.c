@@ -114,7 +114,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
 
           double color[3];
           if(tObj == PLANE){
-            int use_dark_color = (abs(intersec_pt[0] + 10) % 2) == (abs(intersec_pt[2] + 10) % 2);
+            int use_dark_color = (abs(intersec_pt[0] * 2.0 + 10) % 2) == (abs(intersec_pt[2] * 2.0 + 10) % 2);
             for(int i = 0; i < 3; i++){
               obj_normal[i] = scenario.plane.normal[i];
               color[i] = use_dark_color ? scenario.plane.dark_color[i] : scenario.plane.light_color[i];

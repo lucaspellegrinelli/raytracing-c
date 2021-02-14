@@ -40,28 +40,28 @@ int main(){
     {0.0, 0.0, 0.0}, // Color 2 (RGB)
     0.5, // Diffuse
     0.25, // Specular
-    0.25 // Reflection
+    0.35 // Reflection
   };
 
   sphere_t sphere_0 = {
     {-0.5, 0.6, -2.0}, // Position
     {0.20, 0.59, 0.86}, // Color (RGB)
     0.6, // Radius
-    0.25 // Reflection
+    0.10 // Reflection
   };
 
   sphere_t sphere_1 = {
     {0.2, 0.2, -2.0}, // Position
     {0.9, 0.30, 0.23}, // Color (RGB)
     0.2, // Radius
-    0.25 // Reflection
+    0.10 // Reflection
   };
 
   sphere_t sphere_2 = {
     {-0.65, 0.3, -1.0}, // Position
     {0.18, 0.80, 0.44}, // Color (RGB)
     0.3, // Radius
-    0.25 // Reflection
+    0.10 // Reflection
   };
 
   scenario_t scenario = {
