@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <math.h>
 
 double intersect_plane(double camera_pos[3], double camera_dir[3], double plane_pos[3], double plane_normal[3]){
@@ -80,7 +81,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
 
       double reflection = 1.0;
       for(int depth = 0; depth < MAX_DEPTH; depth++){
-        int traced = 0;
+        bool traced = false;
 
         // Trace ray
         int closest_sphere_i = 0;
@@ -106,41 +107,38 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
             intersec_pt[i] = ray_origin[i] + ray_dir[i] * tmin;
           }
 
-          double color[3];
+          double obj_color[3];
           if(tObj == PLANE){
             int use_dark_color = (abs(intersec_pt[0] * 2.0 + 10) % 2) == (abs(intersec_pt[2] * 2.0 + 10) % 2);
             for(int i = 0; i < 3; i++){
               obj_normal[i] = scenario.plane.normal[i];
-              color[i] = use_dark_color ? scenario.plane.dark_color[i] : scenario.plane.light_color[i];
+              obj_color[i] = use_dark_color ? scenario.plane.dark_color[i] : scenario.plane.light_color[i];
             }
           }else{
             for(int i = 0; i < 3; i++){
               obj_normal[i] = intersec_pt[i] - close_sphere.pos[i];
-              color[i] = close_sphere.color[i];
+              obj_color[i] = close_sphere.color[i];
             }
 
             vec_normalize(obj_normal);
           }
 
-          double intercept_to_light[3], intercept_to_camera[3];
+          double dir_to_light[3], dir_to_camera[3], bounce_pt[3];
           for(int i = 0; i < 3; i++){
-            intercept_to_light[i] = scenario.light_pos[i] - intersec_pt[i];
-            intercept_to_camera[i] = scenario.light_pos[i] - intersec_pt[i];
+            dir_to_light[i] = scenario.light_pos[i] - intersec_pt[i];
+            dir_to_camera[i] = scenario.light_pos[i] - intersec_pt[i];
+            bounce_pt[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
           }
 
-          vec_normalize(intercept_to_light);
-          vec_normalize(intercept_to_camera);
+          vec_normalize(dir_to_light);
+          vec_normalize(dir_to_camera);
 
-          int is_shadow;
-          double bounce_dir[3];
-          for(int i = 0; i < 3; i++){
-            bounce_dir[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
-          }
+          bool is_shadow;
 
           if(tObj == PLANE){
-            is_shadow = intersect_sphere(bounce_dir, intercept_to_light, close_sphere.pos, close_sphere.radius) < INF;
+            is_shadow = intersect_sphere(bounce_pt, dir_to_light, close_sphere.pos, close_sphere.radius) < INF;
           }else{
-            is_shadow = intersect_plane(bounce_dir, intercept_to_light, scenario.plane.pos, scenario.plane.normal) < INF;
+            is_shadow = intersect_plane(bounce_pt, dir_to_light, scenario.plane.pos, scenario.plane.normal) < INF;
           }
 
           if(!is_shadow){
@@ -149,19 +147,20 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h, scenario_t sc
 
             double H[3];
             for(int i = 0; i < 3; i++){
-              H[i] = intercept_to_light[i] + intercept_to_camera[i];
+              H[i] = dir_to_light[i] + dir_to_camera[i];
             }
+            
             vec_normalize(H);
 
-            double diffuse_intensity = max(vec_dot(obj_normal, intercept_to_light), 0);
+            double diffuse_intensity = max(vec_dot(obj_normal, dir_to_light), 0);
             double specular_intensity = pow(max(vec_dot(obj_normal, H), 0), scenario.specular_exp);
             for(int i = 0; i < 3; i++){
               ray_color[i] = scenario.ambient_light;
-              ray_color[i] += obj_diffuse * diffuse_intensity * color[i];
+              ray_color[i] += obj_diffuse * diffuse_intensity * obj_color[i];
               ray_color[i] += obj_specular * specular_intensity * scenario.light_color[i];
             }
 
-            traced = 1;
+            traced = true;
           }
         }
         
