@@ -4,21 +4,21 @@
 #include <stdio.h>
 
 void write_to_file(int ***img, int img_w, int img_h){
-  FILE* pgmimg;
-  pgmimg = fopen("image.pgm", "wb");
+  FILE* img_file;
+  img_file = fopen("image.ppm", "wb");
   
-  fprintf(pgmimg, "P3\n");
-  fprintf(pgmimg, "%d %d\n", img_w, img_h);
-  fprintf(pgmimg, "255\n");
+  fprintf(img_file, "P3\n");
+  fprintf(img_file, "%d %d\n", img_w, img_h);
+  fprintf(img_file, "255\n");
 
   for(int i = 0; i < img_h; i++){
     for(int j = 0; j < img_w; j++){
-      fprintf(pgmimg, "%d %d %d ", img[i][j][0], img[i][j][1], img[i][j][2]);
+      fprintf(img_file, "%d %d %d ", img[i][j][0], img[i][j][1], img[i][j][2]);
     }
-    fprintf(pgmimg, "\n");
+    fprintf(img_file, "\n");
   }
 
-  fclose(pgmimg);
+  fclose(img_file);
 }
 
 int main(){
