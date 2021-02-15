@@ -1,7 +1,7 @@
-#include "raytracing.h"
-
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "raytracing.h"
 
 void write_to_file(int ***img, int img_w, int img_h) {
   FILE *img_file;

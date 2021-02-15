@@ -1,11 +1,12 @@
 #include "raytracing.h"
-#include "common_math.h"
 
 #include <float.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "common_math.h"
 
 double intersect_plane(double camera_pos[3], double camera_dir[3],
                        double plane_pos[3], double plane_normal[3]) {
@@ -182,7 +183,8 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h,
           }
         }
 
-        if (!traced) break;
+        if (!traced)
+          break;
 
         double dir_dot_normal = vec_dot(ray_dir, obj_normal);
         for (int i = 0; i < 3; i++) {
