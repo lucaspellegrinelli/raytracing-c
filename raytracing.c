@@ -139,12 +139,10 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h,
             dir_to_camera[i] = scenario.light_pos[i] - intersec_pt[i];
             bounce_pt[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
           }
-
           vec_normalize(dir_to_light);
           vec_normalize(dir_to_camera);
 
           bool is_shadow;
-
           if (tObj == PLANE) {
             is_shadow =
                 intersect_sphere(bounce_pt, dir_to_light, close_sphere.pos,
@@ -154,7 +152,6 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h,
                 intersect_plane(bounce_pt, dir_to_light, scenario.plane.pos,
                                 scenario.plane.normal) < DBL_MAX;
           }
-
           if (!is_shadow) {
             double obj_diffuse =
                 tObj == PLANE ? scenario.plane.diffuse : close_sphere.diffuse;
@@ -183,8 +180,7 @@ void generate_image(int ***img_pixels, int screen_w, int screen_h,
           }
         }
 
-        if (!traced)
-          break;
+        if (!traced) break;
 
         double dir_dot_normal = vec_dot(ray_dir, obj_normal);
         for (int i = 0; i < 3; i++) {
