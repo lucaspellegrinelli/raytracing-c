@@ -55,8 +55,8 @@ double intersect_sphere(double camera_pos[3], double camera_dir[3],
   return DBL_MAX;
 }
 
-void generate_image(int ***img_pixels, int screen_w, int screen_h,
-                    scenario_t scenario) {
+void render_scene(int ***img_pixels, int screen_w, int screen_h,
+                  scenario_t scenario) {
   double screen_ratio = (double)screen_w / screen_h;
   double screen_bounds[4] = {-1.0, -1.0 / screen_ratio + 0.25, 1.0,
                              1.0 / screen_ratio + 0.25};

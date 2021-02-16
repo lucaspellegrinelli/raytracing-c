@@ -81,7 +81,7 @@ int main() {
       {sphere_0, sphere_1, sphere_2}  // Spheres info
   };
 
-  generate_image(img, img_w, img_h, scenario);
+  render_scene(img, img_w, img_h, scenario);
   write_to_file(img, img_w, img_h);
 
   for (int i = 0; i < img_h; i++) {
