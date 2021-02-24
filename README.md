@@ -4,7 +4,7 @@ This is a raytracing implementation that features simple shadows, reflections an
 
 ## Example
 
-![](https://i.imgur.com/gAViE0K.png)
+![](https://i.imgur.com/Ydedkn5.png)
 
 ## How to run
 

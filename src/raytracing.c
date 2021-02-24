@@ -8,8 +8,7 @@
 
 #include "common_math.h"
 
-double intersect_plane(double camera_pos[3], double camera_dir[3],
-                       double plane_pos[3], double plane_normal[3]) {
+double intersect_plane(double camera_pos[3], double camera_dir[3], double plane_pos[3], double plane_normal[3]) {
   double denom = vec_dot(camera_dir, plane_normal);
 
   double abs_denom = denom > 0 ? denom : -denom;
@@ -30,8 +29,7 @@ double intersect_plane(double camera_pos[3], double camera_dir[3],
   return d;
 }
 
-double intersect_sphere(double camera_pos[3], double camera_dir[3],
-                        double sphere_pos[3], double radius) {
+double intersect_sphere(double camera_pos[3], double camera_dir[3], double sphere_pos[3], double radius) {
   double pos_diff[3];
   for (int i = 0; i < 3; i++) {
     pos_diff[i] = camera_pos[i] - sphere_pos[i];
@@ -55,11 +53,11 @@ double intersect_sphere(double camera_pos[3], double camera_dir[3],
   return DBL_MAX;
 }
 
-void render_scene(int ***img_pixels, int screen_w, int screen_h,
-                  scenario_t scenario) {
+void render_scene(int ***img_pixels, int screen_w, int screen_h, scenario_t scenario) {
   double screen_ratio = (double)screen_w / screen_h;
-  double screen_bounds[4] = {-1.0, -1.0 / screen_ratio + 0.25, 1.0,
-                             1.0 / screen_ratio + 0.25};
+  double screen_bounds[4] = {-1.0, -1.0 / screen_ratio, 1.0, 1.0 / screen_ratio};
+
+  double pixel_pos[3] = {0.0, 0.0, 0.0};
 
   double x_step = (screen_bounds[2] - screen_bounds[0]) / screen_w;
   double y_step = (screen_bounds[3] - screen_bounds[1]) / screen_h;
@@ -68,17 +66,17 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
 
   for (int px = 0; px < screen_w; px++) {
     for (int py = 0; py < screen_h; py++) {
-      double x = screen_bounds[0] + px * x_step;
-      double y = screen_bounds[1] + py * y_step;
+      double x = screen_bounds[0] + px * x_step + scenario.camera_rot[0];
+      double y = screen_bounds[1] + py * y_step + scenario.camera_rot[1];
 
       double px_color[3] = {0.0, 0.0, 0.0};
 
-      scenario.camera_dir[0] = x;
-      scenario.camera_dir[1] = y;
+      pixel_pos[0] = x;
+      pixel_pos[1] = y;
 
       double ray_origin[3], ray_dir[3];
       for (int i = 0; i < 3; i++) {
-        ray_dir[i] = scenario.camera_dir[i] - scenario.camera_pos[i];
+        ray_dir[i] = pixel_pos[i] - scenario.camera_pos[i];
         ray_origin[i] = scenario.camera_pos[i];
       }
 
@@ -88,14 +86,11 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
       for (int depth = 0; depth < MAX_DEPTH; depth++) {
         bool traced = false;
 
-        // Trace ray
         int closest_sphere_i = 0;
         double t_sphere = DBL_MAX;
 
         for (int i = 0; i < n_spheres; i++) {
-          double t =
-              intersect_sphere(ray_origin, ray_dir, scenario.spheres[i].pos,
-                               scenario.spheres[i].radius);
+          double t = intersect_sphere(ray_origin, ray_dir, scenario.spheres[i].pos, scenario.spheres[i].radius);
           if (t < t_sphere) {
             t_sphere = t;
             closest_sphere_i = i;
@@ -103,8 +98,7 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
         }
 
         sphere_t close_sphere = scenario.spheres[closest_sphere_i];
-        double t_plane = intersect_plane(
-            ray_origin, ray_dir, scenario.plane.pos, scenario.plane.normal);
+        double t_plane = intersect_plane(ray_origin, ray_dir, scenario.plane.pos, scenario.plane.normal);
 
         double tmin = min(t_sphere, t_plane);
         int tObj = t_sphere < t_plane ? SPHERE : PLANE;
@@ -117,12 +111,10 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
 
           double obj_color[3];
           if (tObj == PLANE) {
-            int use_dark_color = (abs(intersec_pt[0] * 2.0 + 10) % 2) ==
-                                 (abs(intersec_pt[2] * 2.0 + 10) % 2);
+            int use_dark_color = (abs(intersec_pt[0] * 2.0 + 100000) % 2) == (abs(intersec_pt[2] * 2.0 + 100000) % 2);
             for (int i = 0; i < 3; i++) {
               obj_normal[i] = scenario.plane.normal[i];
-              obj_color[i] = use_dark_color ? scenario.plane.dark_color[i]
-                                            : scenario.plane.light_color[i];
+              obj_color[i] = use_dark_color ? scenario.plane.dark_color[i] : scenario.plane.light_color[i];
             }
           } else {
             for (int i = 0; i < 3; i++) {
@@ -139,24 +131,19 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
             dir_to_camera[i] = scenario.light_pos[i] - intersec_pt[i];
             bounce_pt[i] = intersec_pt[i] + obj_normal[i] * 1e-4;
           }
+
           vec_normalize(dir_to_light);
           vec_normalize(dir_to_camera);
 
           bool is_shadow;
           if (tObj == PLANE) {
-            is_shadow =
-                intersect_sphere(bounce_pt, dir_to_light, close_sphere.pos,
-                                 close_sphere.radius) < DBL_MAX;
+            is_shadow = intersect_sphere(bounce_pt, dir_to_light, close_sphere.pos, close_sphere.radius) < DBL_MAX;
           } else {
-            is_shadow =
-                intersect_plane(bounce_pt, dir_to_light, scenario.plane.pos,
-                                scenario.plane.normal) < DBL_MAX;
+            is_shadow = intersect_plane(bounce_pt, dir_to_light, scenario.plane.pos, scenario.plane.normal) < DBL_MAX;
           }
           if (!is_shadow) {
-            double obj_diffuse =
-                tObj == PLANE ? scenario.plane.diffuse : close_sphere.diffuse;
-            double obj_specular =
-                tObj == PLANE ? scenario.plane.specular : close_sphere.specular;
+            double obj_diffuse = tObj == PLANE ? scenario.plane.diffuse : close_sphere.diffuse;
+            double obj_specular = tObj == PLANE ? scenario.plane.specular : close_sphere.specular;
 
             double H[3];
             for (int i = 0; i < 3; i++) {
@@ -165,15 +152,12 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
 
             vec_normalize(H);
 
-            double diffuse_intensity =
-                max(vec_dot(obj_normal, dir_to_light), 0);
-            double specular_intensity =
-                pow(max(vec_dot(obj_normal, H), 0), scenario.specular_exp);
+            double diffuse_intensity = max(vec_dot(obj_normal, dir_to_light), 0);
+            double specular_intensity = pow(max(vec_dot(obj_normal, H), 0), scenario.specular_exp);
             for (int i = 0; i < 3; i++) {
               ray_color[i] = scenario.ambient_light;
               ray_color[i] += obj_diffuse * diffuse_intensity * obj_color[i];
-              ray_color[i] +=
-                  obj_specular * specular_intensity * scenario.light_color[i];
+              ray_color[i] += obj_specular * specular_intensity * scenario.light_color[i];
             }
 
             traced = true;
@@ -190,13 +174,11 @@ void render_scene(int ***img_pixels, int screen_w, int screen_h,
         }
 
         vec_normalize(ray_dir);
-        reflection *=
-            tObj == PLANE ? scenario.plane.reflection : close_sphere.reflection;
+        reflection *= tObj == PLANE ? scenario.plane.reflection : close_sphere.reflection;
       }
 
       for (int i = 0; i < 3; i++) {
-        img_pixels[screen_h - py - 1][px][i] =
-            min(max(0, px_color[i]), 1) * 255;
+        img_pixels[screen_h - py - 1][px][i] = min(max(0, px_color[i]), 1) * 255;
       }
     }
   }

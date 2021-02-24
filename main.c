@@ -22,8 +22,8 @@ void write_to_file(int ***img, int img_w, int img_h) {
 }
 
 int main() {
-  int img_w = 1920;
-  int img_h = 1080;
+  int img_w = 7680;
+  int img_h = 4320;
 
   int ***img = (int ***)malloc(img_h * sizeof(int **));
   for (int i = 0; i < img_h; i++) {
@@ -73,8 +73,8 @@ int main() {
   scenario_t scenario = {
       0.00,                           // Ambient Light
       100,                            // Specular light power
-      {0.75, 0.3, 1.0},               // Camera Position
-      {0.0, 0.0, 0.0},                // Camera Direction
+      {0.75, 0.4, 2.0},               // Camera Position
+      {0.0, 0.5},                     // Camera Rotation
       {-1.0, 3.0, 1.0},               // Light position
       {1.0, 1.0, 1.0},                // Light color
       plane,                          // Plane info
