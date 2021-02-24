@@ -22,8 +22,8 @@ void write_to_file(int ***img, int img_w, int img_h) {
 }
 
 int main() {
-  int img_w = 7680;
-  int img_h = 4320;
+  int img_w = 1920;
+  int img_h = 1080;
 
   int ***img = (int ***)malloc(img_h * sizeof(int **));
   for (int i = 0; i < img_h; i++) {
